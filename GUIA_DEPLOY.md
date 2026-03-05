@@ -1,4 +1,28 @@
-# 🌲 EcoMaintain — Guia Completo de Deploy (Neon + Vercel)
+# 🌲 EcoMaintain v2.0 — Guia Completo de Deploy (Neon + Vercel)
+
+## 🆕 Novidades da Versão 2.0
+
+| Módulo | Descrição |
+|--------|-----------|
+| ✔️ **Checklist Dinâmico** | Manutentor adiciona itens em tempo real; campo de observação obrigatório ao marcar "Não OK" |
+| 📄 **Laudos Digitais** | Geração automática de laudo ao finalizar checklist; PCM aprova/reprova com dados estruturados no Neon |
+| ☁️ **Manuais na Nuvem** | PCM faz upload de manuais (PDF, DOC, imagens); disponíveis instantaneamente para todos os manutentores |
+| 📑 **Relatório de Fechamento** | Fechamento de O.S. com múltiplas fotos + assinatura digital + relatório consolidado para PCM |
+
+### Novos Arquivos de API
+- `api/checklist.js` — Checklist dinâmico por agendamento
+- `api/laudos.js` — Laudos com fluxo de aprovação PCM
+- `api/manuais.js` — Manuais técnicos na nuvem
+- `api/relatorios-fechamento.js` — Relatórios de fechamento de O.S.
+
+### Novas Tabelas no Banco (criadas automaticamente)
+- `checklist_itens` — Itens do checklist com status e observações
+- `laudos` — Laudos gerados com dados estruturados
+- `manuais` — Arquivos de manuais em base64
+- `relatorios_fechamento` — Relatórios com fotos e assinatura digital
+
+---
+
 
 > **Tempo estimado:** 20 a 30 minutos  
 > **Pré-requisitos:** Conta no GitHub, conta na Vercel (gratuita) e conta no Neon (gratuita)
