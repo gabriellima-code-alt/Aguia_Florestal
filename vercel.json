@@ -1,16 +1,7 @@
 {
   "version": 2,
   "routes": [
-    { "src": "/api/auth", "dest": "/api/auth.js" },
-    { "src": "/api/manutentores", "dest": "/api/manutentores.js" },
-    { "src": "/api/maquinas", "dest": "/api/maquinas.js" },
-    { "src": "/api/pecas", "dest": "/api/pecas.js" },
-    { "src": "/api/ordens-servico", "dest": "/api/ordens-servico.js" },
-    { "src": "/api/agenda-preventiva", "dest": "/api/agenda-preventiva.js" },
-    { "src": "/api/checklist", "dest": "/api/checklist.js" },
-    { "src": "/api/laudos", "dest": "/api/laudos.js" },
-    { "src": "/api/manuais", "dest": "/api/manuais.js" },
-    { "src": "/api/relatorios-fechamento", "dest": "/api/relatorios-fechamento.js" },
+    { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*)", "dest": "/public/$1" }
   ]
 }
