@@ -295,14 +295,20 @@ const DB = {
     },
 
     async atualizarAgendamento(id, status, laudo_dados = null, laudo_pdf = null) {
-        const resp = await fetch(`${API_BASE}/agenda-preventiva`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, status, laudo_dados, laudo_pdf })
-        });
-        if (!resp.ok) {
-            const data = await resp.json();
-            throw new Error(data.erro || 'Erro ao atualizar agendamento');
+        try {
+            const resp = await fetch(`${API_BASE}/agenda-preventiva`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status, laudo_dados, laudo_pdf })
+            });
+            if (!resp.ok) {
+                const data = await resp.json();
+                throw new Error(data.erro || data.detalhe || 'Erro ao atualizar agendamento');
+            }
+            return await resp.json();
+        } catch(e) {
+            console.error('Erro em atualizarAgendamento:', e);
+            throw e;
         }
     },
 
@@ -2415,8 +2421,8 @@ UI.finalizarChecklistPreventivo = async function(agendaId) {
         NOTIFICACOES.sucesso('Checklist finalizado e laudo gerado com sucesso!');
         setTimeout(() => UI.renderChecklistPreventivo(), 1500);
     } catch(e) {
-        console.error(e);
-        NOTIFICACOES.erro(e.message || 'Erro ao finalizar checklist.');
+        console.error('Erro ao finalizar checklist:', e);
+        NOTIFICACOES.erro(e.message || 'Erro ao finalizar checklist. Verifique o console para mais detalhes.');
     }
 };
 
@@ -2698,7 +2704,8 @@ const UI_MANUAIS_PCM = {
             document.getElementById('formCadastroManuais').reset();
             this.renderListaManuais();
         } catch (erro) {
-            alert('❌ Erro ao salvar: ' + erro);
+            console.error('Erro ao salvar equipamento:', erro);
+            alert('❌ Erro ao salvar: ' + (erro.message || erro));
         }
     },
 
