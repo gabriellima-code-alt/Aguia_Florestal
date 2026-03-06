@@ -2818,11 +2818,11 @@ const UI_MANUAIS_MANUTENTOR = {
         container.innerHTML = equipamentos.map(eq => `
             <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <p style="font-weight: bold; margin: 0;">${eq.id}</p>
-                    <p style="font-size: 12px; color: #757575; margin: 5px 0 0 0;">${eq.modelo}</p>
-                    <p style="font-size: 11px; color: #999; margin: 3px 0 0 0;">Tamanho: ${eq.tamanho}</p>
+                    <p style="font-weight: bold; margin: 0;">${eq.nome_maquina}</p>
+                    <p style="font-size: 12px; color: #757575; margin: 5px 0 0 0;">${eq.nome_arquivo}</p>
+                    <p style="font-size: 11px; color: #999; margin: 3px 0 0 0;">Tamanho: ${eq.tamanho_mb} MB</p>
                 </div>
-                <button onclick="UI_MANUAIS_MANUTENTOR.visualizarPDF('${eq.id}')" class="btn btn-primary btn-sm">👁️ Visualizar</button>
+                <button onclick="UI_MANUAIS_MANUTENTOR.visualizarPDF('${eq.id_maquina}')" class="btn btn-primary btn-sm">👁️ Visualizar</button>
             </div>
         `).join('');
     },
@@ -2859,8 +2859,9 @@ const UI_MANUAIS_MANUTENTOR = {
         const termo = document.getElementById('inputBuscaManuaisManutentor').value.toLowerCase();
         const equipamentos = await MANUAIS_DB.obterTodosManuais();
         const filtrados = equipamentos.filter(eq =>
-            eq.id.toLowerCase().includes(termo) ||
-            eq.modelo.toLowerCase().includes(termo)
+            (eq.id_maquina && eq.id_maquina.toLowerCase().includes(termo)) ||
+            (eq.nome_maquina && eq.nome_maquina.toLowerCase().includes(termo)) ||
+            (eq.nome_arquivo && eq.nome_arquivo.toLowerCase().includes(termo))
         );
 
         const container = document.getElementById('listaManuaisManutentor');
@@ -2869,10 +2870,10 @@ const UI_MANUAIS_MANUTENTOR = {
             : filtrados.map(eq => `
                 <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <p style="font-weight: bold; margin: 0;">${eq.id}</p>
-                        <p style="font-size: 12px; color: #757575; margin: 5px 0 0 0;">${eq.modelo}</p>
+                        <p style="font-weight: bold; margin: 0;">${eq.nome_maquina}</p>
+                        <p style="font-size: 12px; color: #757575; margin: 5px 0 0 0;">${eq.nome_arquivo}</p>
                     </div>
-                    <button onclick="UI_MANUAIS_MANUTENTOR.visualizarPDF('${eq.id}')" class="btn btn-primary btn-sm">👁️ Visualizar</button>
+                    <button onclick="UI_MANUAIS_MANUTENTOR.visualizarPDF('${eq.id_maquina}')" class="btn btn-primary btn-sm">👁️ Visualizar</button>
                 </div>
             `).join('');
     }
