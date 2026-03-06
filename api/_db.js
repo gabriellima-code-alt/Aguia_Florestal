@@ -63,6 +63,7 @@ async function initDB() {
       assinatura_manutentor TEXT,
       assinatura_operador TEXT,
       foto_evidencia TEXT,
+      foto_inicial TEXT,
       data_confirmacao TIMESTAMP,
       data_pendencia TIMESTAMP,
       data_liberacao TIMESTAMP
@@ -99,41 +100,64 @@ async function initDB() {
       tipo_manutencao TEXT,
       status TEXT DEFAULT 'pendente',
       data_conclusao TIMESTAMP,
-      data_cadastro TIMESTAMP DEFAULT NOW(),
-      checklist_itens JSONB DEFAULT '[]',
-      checklist_observacoes TEXT,
-      laudo_gerado BOOLEAN DEFAULT FALSE
+      laudo_dados TEXT,
+      laudo_pdf TEXT,
+      data_cadastro TIMESTAMP DEFAULT NOW()
     )
   `;
 
-  // Adicionar coluna de manuais se não existir
-  try {
-    await sql`ALTER TABLE maquinas ADD COLUMN IF NOT EXISTS manual_pdf BYTEA`;
-  } catch(e) { /* coluna já existe */ }
+  await sql`
+    CREATE TABLE IF NOT EXISTS manuais (
+      id TEXT PRIMARY KEY,
+      id_maquina TEXT NOT NULL,
+      nome_maquina TEXT,
+      nome_arquivo TEXT NOT NULL,
+      arquivo_pdf TEXT NOT NULL,
+      tamanho_mb NUMERIC(10,2),
+      data_upload TIMESTAMP DEFAULT NOW(),
+      UNIQUE(id_maquina, nome_arquivo)
+    )
+  `;
 
-  // Adicionar coluna de fotos múltiplas se não existir
-  try {
-    await sql`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS fotos_evidencia JSONB DEFAULT '[]'`;
-  } catch(e) { /* coluna já existe */ }
+  await sql`
+    CREATE TABLE IF NOT EXISTS registros_tempo_trabalho (
+      id SERIAL PRIMARY KEY,
+      id_manutentor TEXT NOT NULL,
+      nome_manutentor TEXT,
+      data_registro DATE NOT NULL,
+      hora_inicio TIME,
+      hora_fim TIME,
+      duracao_minutos INTEGER DEFAULT 0,
+      tipo_registro TEXT DEFAULT 'trabalho',
+      motivo_pausa TEXT,
+      timestamp TIMESTAMP DEFAULT NOW()
+    )
+  `;
 
-  // Adicionar coluna de relatório de fechamento se não existir
-  try {
-    await sql`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS relatorio_fechamento JSONB`;
-  } catch(e) { /* coluna já existe */ }
+  await sql`
+    CREATE TABLE IF NOT EXISTS sessoes_trabalho (
+      id SERIAL PRIMARY KEY,
+      id_manutentor TEXT NOT NULL,
+      nome_manutentor TEXT,
+      data_sessao DATE NOT NULL,
+      hora_inicio TIMESTAMP,
+      hora_fim TIMESTAMP,
+      pausas TEXT,
+      total_minutos_trabalhados INTEGER DEFAULT 0,
+      total_minutos_pausa INTEGER DEFAULT 0,
+      timestamp_criacao TIMESTAMP DEFAULT NOW()
+    )
+  `;
 
   // Inserir usuário PCM padrão se não existir
-  try {
-    const pcmExistente = await sql`SELECT id FROM usuarios WHERE email = 'pcm@admin.com'`;
-    if (pcmExistente.length === 0) {
-      const bcrypt = require('bcryptjs');
-      const senhaHash = await bcrypt.hash('123456', 10);
-      await sql`
-        INSERT INTO usuarios (id, nome, email, senha, role)
-        VALUES ('PCM_ADMIN', 'Administrador PCM', 'pcm@admin.com', ${senhaHash}, 'pcm')
-      `;
-    }
-  } catch(e) {
-    console.warn('Aviso ao criar usuário PCM padrão:', e.message);
+  const pcmExistente = await sql`SELECT id FROM usuarios WHERE email = 'pcm@admin.com'`;
+  if (pcmExistente.length === 0) {
+    const bcrypt = require('bcryptjs');
+    const senhaHash = await bcrypt.hash('123456', 10);
+    await sql`
+      INSERT INTO usuarios (id, nome, email, senha, role)
+      VALUES ('PCM_ADMIN', 'Administrador PCM', 'pcm@admin.com', ${senhaHash}, 'pcm')
+    `;
   }
 }
 

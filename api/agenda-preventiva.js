@@ -43,7 +43,9 @@ module.exports = async (req, res) => {
         data_programada: a.data_programada,
         tipo_manutencao: a.tipo_manutencao,
         status: a.status,
-        data_conclusao: a.data_conclusao ? a.data_conclusao.toISOString() : null
+        data_conclusao: a.data_conclusao ? a.data_conclusao.toISOString() : null,
+        laudo_dados: a.laudo_dados,
+        laudo_pdf: a.laudo_pdf
       })));
     }
 
@@ -71,7 +73,7 @@ module.exports = async (req, res) => {
 
     // PUT - Atualizar status do agendamento (concluir checklist)
     if (req.method === 'PUT') {
-      const { id, status, checklist_itens, checklist_observacoes, laudo_gerado } = req.body;
+      const { id, status, laudo_dados, laudo_pdf } = req.body;
 
       if (!id || !status) {
         return res.status(400).json({ erro: 'ID e status são obrigatórios.' });
@@ -80,10 +82,10 @@ module.exports = async (req, res) => {
       if (status === 'concluido') {
         await sql`
           UPDATE agenda_preventiva
-          SET status = 'concluido', data_conclusao = NOW(),
-              checklist_itens = ${JSON.stringify(checklist_itens || [])},
-              checklist_observacoes = ${checklist_observacoes || null},
-              laudo_gerado = ${laudo_gerado || false}
+          SET status = 'concluido', 
+              data_conclusao = NOW(),
+              laudo_dados = ${laudo_dados || null},
+              laudo_pdf = ${laudo_pdf || null}
           WHERE id = ${id}
         `;
       } else {
