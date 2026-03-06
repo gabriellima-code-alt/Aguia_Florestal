@@ -80,12 +80,22 @@ module.exports = async (req, res) => {
       }
 
       if (status === 'concluido') {
+        // Validar que os dados do laudo não estão vazios
+        if (!laudo_dados || !laudo_pdf) {
+          return res.status(400).json({ erro: 'Dados do laudo e PDF são obrigatórios para conclusão.' });
+        }
+
+        // Verificar tamanho do PDF (máximo 5MB em Base64)
+        if (laudo_pdf.length > 5242880) {
+          return res.status(413).json({ erro: 'Arquivo PDF muito grande. Máximo 5MB.' });
+        }
+
         await sql`
           UPDATE agenda_preventiva
           SET status = 'concluido', 
               data_conclusao = NOW(),
-              laudo_dados = ${laudo_dados || null},
-              laudo_pdf = ${laudo_pdf || null}
+              laudo_dados = ${laudo_dados},
+              laudo_pdf = ${laudo_pdf}
           WHERE id = ${id}
         `;
       } else {
@@ -113,6 +123,11 @@ module.exports = async (req, res) => {
 
   } catch (error) {
     console.error('Erro na API de agenda preventiva:', error);
-    return res.status(500).json({ erro: 'Erro interno do servidor.', detalhe: error.message });
+    console.error('Stack:', error.stack);
+    return res.status(500).json({ 
+      erro: 'Erro interno do servidor.', 
+      detalhe: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };

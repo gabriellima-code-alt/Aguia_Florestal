@@ -53,6 +53,11 @@ module.exports = async (req, res) => {
         return res.status(400).json({ erro: 'ID da máquina, nome do arquivo e PDF são obrigatórios.' });
       }
 
+      // Verificar tamanho do PDF (máximo 10MB em Base64)
+      if (arquivo_pdf.length > 10485760) {
+        return res.status(413).json({ erro: 'Arquivo PDF muito grande. Máximo 10MB.' });
+      }
+
       // Verificar se já existe um manual com o mesmo nome para esta máquina
       const existente = await sql`
         SELECT id FROM manuais WHERE id_maquina = ${id_maquina} AND nome_arquivo = ${nome_arquivo}
@@ -83,6 +88,11 @@ module.exports = async (req, res) => {
         return res.status(400).json({ erro: 'ID do manual e arquivo PDF são obrigatórios.' });
       }
 
+      // Verificar tamanho do PDF (máximo 10MB em Base64)
+      if (arquivo_pdf.length > 10485760) {
+        return res.status(413).json({ erro: 'Arquivo PDF muito grande. Máximo 10MB.' });
+      }
+
       await sql`
         UPDATE manuais
         SET arquivo_pdf = ${arquivo_pdf}, tamanho_mb = ${tamanho_mb || 0}, data_upload = NOW()
@@ -108,6 +118,11 @@ module.exports = async (req, res) => {
 
   } catch (error) {
     console.error('Erro na API de manuais:', error);
-    return res.status(500).json({ erro: 'Erro interno do servidor.', detalhe: error.message });
+    console.error('Stack:', error.stack);
+    return res.status(500).json({ 
+      erro: 'Erro interno do servidor.', 
+      detalhe: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
