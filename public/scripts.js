@@ -2394,13 +2394,20 @@ UI.finalizarChecklistPreventivo = async function(agendaId) {
         const opt = {
             margin: 10,
             filename: `laudo_${item.id}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
+            image: { type: 'jpeg', quality: 0.85 },
+            html2canvas: { scale: 1.5 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        const pdfBase64 = await html2pdf().from(container).set(opt).outputPdf('datauristring');
+        let pdfBase64 = await html2pdf().from(container).set(opt).outputPdf('datauristring');
         document.body.removeChild(container);
+
+        // Verificar tamanho do PDF em Base64
+        console.log('Tamanho do PDF gerado:', (pdfBase64.length / 1024 / 1024).toFixed(2), 'MB');
+        if (pdfBase64.length > 4500000) {
+            NOTIFICACOES.erro('PDF gerado eh muito grande. Tente reduzir o numero de itens do checklist ou comprimir imagens.');
+            return;
+        }
 
         // Salvar no banco de dados
         await DB.atualizarAgendamento(agendaId, 'concluido', JSON.stringify(resultados), pdfBase64);
@@ -2496,7 +2503,7 @@ UI.renderAgendaPreventiva = async function() {
 };
 
 // ============================================
-// MÓDULO GESTÃO DE MANUAIS (IndexedDB - local)
+// MÓDULO GESTÃO DE MANUAIS (Neon DB - Global)
 // ============================================
 
 const MANUAIS_DB = {
@@ -2676,7 +2683,17 @@ const UI_MANUAIS_PCM = {
         }
 
         try {
-            await MANUAIS_DB.adicionarManual(idMaquina, modeloMaquina, arquivoPDF.name, await UI.converterArquivoParaBase64(arquivoPDF), (arquivoPDF.size / 1024 / 1024).toFixed(2));
+            const pdfBase64 = await UI.converterArquivoParaBase64(arquivoPDF);
+            const tamanhoMb = (arquivoPDF.size / 1024 / 1024).toFixed(2);
+            
+            // Verificar tamanho do PDF em Base64
+            console.log('Tamanho do PDF do manual:', (pdfBase64.length / 1024 / 1024).toFixed(2), 'MB');
+            if (pdfBase64.length > 4500000) {
+                alert('❌ Arquivo PDF muito grande (maximo 3MB em Base64). Tente comprimir o PDF.');
+                return;
+            }
+            
+            await MANUAIS_DB.adicionarManual(idMaquina, modeloMaquina, arquivoPDF.name, pdfBase64, tamanhoMb);
             alert('✅ Equipamento cadastrado com sucesso!');
             document.getElementById('formCadastroManuais').reset();
             this.renderListaManuais();
@@ -2721,7 +2738,17 @@ const UI_MANUAIS_PCM = {
             const file = e.target.files[0];
             if (!file) return;
             try {
-                await MANUAIS_DB.atualizarManual(id, await UI.converterArquivoParaBase64(file), (file.size / 1024 / 1024).toFixed(2));
+                const pdfBase64 = await UI.converterArquivoParaBase64(file);
+                const tamanhoMb = (file.size / 1024 / 1024).toFixed(2);
+                
+                // Verificar tamanho do PDF em Base64
+                console.log('Tamanho do PDF do manual (atualizado):', (pdfBase64.length / 1024 / 1024).toFixed(2), 'MB');
+                if (pdfBase64.length > 4500000) {
+                    alert('❌ Arquivo PDF muito grande (maximo 3MB em Base64). Tente comprimir o PDF.');
+                    return;
+                }
+                
+                await MANUAIS_DB.atualizarManual(id, pdfBase64, tamanhoMb);
                 alert('✅ PDF atualizado com sucesso!');
                 this.renderListaManuais();
             } catch (erro) {
@@ -2833,15 +2860,15 @@ const UI_MANUAIS_MANUTENTOR = {
             if (!manuais || manuais.length === 0) { alert('Manual não encontrado.'); return; }
             
             const manual = manuais[0];
-            const frame = document.getElementById('framePDF');
-            if (window.pdfUrlAtiva) URL.revokeObjectURL(window.pdfUrlAtiva);
+            const frame = document.getElementById('framePDFManutentor');
+            if (window.pdfUrlAtivaManutentor) URL.revokeObjectURL(window.pdfUrlAtivaManutentor);
 
             const url = manual.arquivo_pdf;
-            window.pdfUrlAtiva = url;
+            window.pdfUrlAtivaManutentor = url;
 
-            document.getElementById('nomeManualAtivo').innerText = `Manual: ${manual.nome_maquina} - ${manual.nome_arquivo}`;
+            document.getElementById('nomeManualAtivoManutentor').innerText = `Manual: ${manual.nome_maquina} - ${manual.nome_arquivo}`;
             frame.src = url;
-            document.getElementById('modalPDFManuais').style.display = 'block';
+            document.getElementById('modalPDFManutentor').style.display = 'block';
             document.body.style.overflow = 'hidden';
         } catch (erro) {
             alert('Erro ao visualizar: ' + erro);
